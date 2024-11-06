@@ -1,0 +1,67 @@
+int trig = 11;                // trigger pin for ultrasonic sensor
+int echo = 10;                // echo pin for ultrasonic sensor
+int red = 5;                  
+int yellow = 6;               
+int green = 7;                
+int potPin = A0;              // Potentiometer pin
+
+long duration = 0;            
+int cm = 0;                   // distance in centimeters
+int minRange = 10;            // Minimum range for pot
+int maxRange = 60;            // Maximum range for pot
+int threshold = 0;            // Dynamic threshold 
+
+void setup() {
+    pinMode(trig, OUTPUT);    // Set trigger pin as output
+    pinMode(echo, INPUT);     // Set echo pin as input
+    pinMode(red, OUTPUT);     // Red LED pin as output
+    pinMode(green, OUTPUT);   // Green LED pin as output
+    pinMode(yellow, OUTPUT);  // Yellow LED pin as output
+
+    Serial.begin(9600);       // Start serial communication at 9600 baud
+    Serial.println("Serial is Starting..."); // Indicate that serial communication is ready
+}
+
+void loop() {
+    // Read potentiometer and map to threshold range
+    int potValue = analogRead(potPin);                    // Read pot
+    threshold = map(potValue, 0, 1023, minRange, maxRange); // Map to range 
+
+    // Send a pulse 
+    digitalWrite(trig, LOW);         
+    delayMicroseconds(5);            
+    digitalWrite(trig, HIGH);        
+    delayMicroseconds(10);           
+    digitalWrite(trig, LOW);   
+      
+    duration = pulseIn(echo, HIGH);  // Read the duration of the high signal
+    cm = duration * 0.034 / 2;       // Convert the duration into cm
+
+    Serial.print("Distance: ");
+    Serial.print(cm);
+    Serial.print(" cm | Threshold: ");
+    Serial.print(threshold);
+    Serial.println(" cm");
+
+    // LED-control based on proportional threshold values
+    if (cm < threshold / 3) {
+        digitalWrite(red, HIGH);
+        digitalWrite(yellow, LOW);
+        digitalWrite(green, LOW);
+    } else if (cm < (2 * threshold / 3)) {
+        digitalWrite(red, LOW);
+        digitalWrite(yellow, HIGH);
+        digitalWrite(green, LOW);
+    } else if (cm <= threshold) {
+        digitalWrite(red, LOW);
+        digitalWrite(yellow, LOW);
+        digitalWrite(green, HIGH);
+    } else {
+        // If distance exceeds the threshold, turn off all LEDs
+        digitalWrite(red, LOW);
+        digitalWrite(yellow, LOW);
+        digitalWrite(green, LOW);
+    }
+    
+    delay(100); // Delay for stability
+}
